@@ -40,16 +40,16 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
 
   MatrixXd Hj(3, 4);
-  double epsilon = 0.0001;
+  float epsilon = 0.0001;
 
-  double p_x = x_state(0);
-  double p_y = x_state(1);
-  double v_x = x_state(2);
-  double v_y = x_state(3);
+  float p_x = x_state(0);
+  float p_y = x_state(1);
+  float v_x = x_state(2);
+  float v_y = x_state(3);
 
-  double e1 = ( p_x * p_x ) + ( p_y * p_y );
-  double e2 = sqrt(e1);
-  double e3 = ( e1 * e2 );
+  float e1 = ( p_x * p_x ) + ( p_y * p_y );
+  float e2 = sqrt(e1);
+  float e3 = ( e1 * e2 );
 
   if( fabs(e1) < epsilon) {
     cout << "CalculateJacobian() error. Trying to divide by 0" << endl;

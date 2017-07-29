@@ -35,9 +35,9 @@ void KalmanFilter::Update(const VectorXd &z) {
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
-  double rho = sqrt( pow( x_(0), 2 ) + pow( x_(1), 2 ) );
-  double eta = atan( x_(1) / x_(0) );
-  double rho_d = ( (x_(0)*x_(2) + x_(1)*x_(3)) / 
+  float rho = sqrt( pow( x_(0), 2 ) + pow( x_(1), 2 ) );
+  float eta = atan( x_(1) / x_(0) );
+  float rho_d = ( (x_(0)*x_(2) + x_(1)*x_(3)) / 
                     sqrt( pow( x_(0), 2 ) + pow( x_(1), 2 )) );
 
   VectorXd h(3);
