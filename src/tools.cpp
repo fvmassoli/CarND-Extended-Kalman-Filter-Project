@@ -11,12 +11,15 @@ Tools::~Tools() {}
 
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
-
+  
   VectorXd rmse(4);
-  rmse << 0, 0, 0, 0;
+  rmse << 0,0,0,0;
 
+  // check the validity of the following inputs:
+  //  * the estimation vector size should not be zero
+  //  * the estimation vector size should equal ground truth vector size
   if(estimations.size() != ground_truth.size() || estimations.size() == 0){
-    cout << "Invalid data. Cannot evaluate RMSE" << endl;
+    cout << "Invalid input. Cannot evaluate RMSE!!" << endl;
     return rmse;
   }
 
@@ -31,42 +34,47 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
   }
 
   //calculate the mean
-  rmse = rmse / estimations.size();
+  rmse = rmse/estimations.size();
 
   //calculate the squared root
   rmse = rmse.array().sqrt();
 
   //return the result
-return rmse;
-
+  return rmse;
 }
 
 MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
-
-  MatrixXd Hj(3, 4);
+  /**
+  TODO:
+    * Calculate a Jacobian here.
+  */
+  MatrixXd Hj(3,4);
   Hj << 0,0,0,0,
         0,0,0,0,
         0,0,0,0;
 
-  float p_x = x_state(0);
-  float p_y = x_state(1);
-  float v_x = x_state(2);
-  float v_y = x_state(3);
+  //recover state parameters
+  float px = x_state(0);
+  float py = x_state(1);
+  float vx = x_state(2);
+  float vy = x_state(3);
 
-  float e1 = ( p_x * p_x ) + ( p_y * p_y );
-
-  if(fabs(e1) < 0.0001){
-    std::cout << "Function CalculateJacobian() has Error: Division by Zero" << std::endl;
-    return Hj;
-}
-
+  //pre-compute a set of terms to avoid repeated calculation
+  float e1 = px*px+py*py;
   float e2 = sqrt(e1);
-  float e3 = ( e1 * e2 );
-    
-  Hj << (p_x/e2), (p_y/e2), 0, 0,
-		   -(p_y/e1), (p_x/e1), 0, 0,
-		     p_y*(v_x*p_y - v_y*p_x)/e3, p_x*(p_x*v_y - p_y*v_x)/e3, p_x/e2, p_y/e2;
+  float e3 = (e1*e2);
 
-	return Hj;
+  //check division by zero
+  if(fabs(e1) < 0.0001){
+    std::cout << "Cannot divide by 0 for Jacobian" << std::endl;
+    return Hj;
+  }
+
+  //compute the Jacobian matrix
+  Hj << (px/e2),                (py/e2),                0,      0,
+        -(py/e1),               (px/e1),                0,      0, 
+        py*(vx*py - vy*px)/e3,  px*(px*vy - py*vx)/e3,  px/e2,  py/e2;
+
+  return Hj;
 
 }

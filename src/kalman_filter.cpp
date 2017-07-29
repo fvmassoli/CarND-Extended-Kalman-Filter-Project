@@ -1,7 +1,5 @@
+#include <math.h>
 #include "kalman_filter.h"
-#include <iostream>
-
-using namespace std;
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -20,7 +18,6 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
   H_ = H_in;
   R_ = R_in;
   Q_ = Q_in;
-
 }
 
 void KalmanFilter::Predict() {
@@ -28,38 +25,62 @@ void KalmanFilter::Predict() {
   x_ = F_ * x_;
   MatrixXd Ft = F_.transpose();
   P_ = F_ * P_ * Ft + Q_;
-
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
-
+  
   VectorXd z_pred = H_ * x_;
-  VectorXd y = z - z_pred;
 
-  UpdateHelper(y);
+  VectorXd y = z - z_pred;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd PHt = P_ * Ht;
+  MatrixXd S = H_ * PHt + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd K = PHt * Si;
+
+  //new estimate
+  x_ = x_ + (K * y);
+  long x_size = x_.size();
+  MatrixXd I = MatrixXd::Identity(x_size, x_size);
+  P_ = (I - K * H_) * P_;
+
+}
+
+VectorXd RadarCartesianToPolar(const VectorXd &x_state){
+  /*
+   * convert radar measurements from cartesian coordinates (x, y, vx, vy) to
+   * polar (rho, phi, rho_dot) coordinates
+  */
+  float px, py, vx, vy;
+  px = x_state[0];
+  py = x_state[1];
+  vx = x_state[2];
+  vy = x_state[3];
+
+  float rho, phi, rho_dot;
+  rho = sqrt(px*px + py*py);
+  phi = atan2(py, px);  // returns values between -pi and pi
+
+  // if rho is very small, set it to 0.0001 to avoid division by 0 in computing rho_dot
+  if(rho < 0.000001)
+    rho = 0.000001;
+
+  rho_dot = (px * vx + py * vy) / rho;
+
+  VectorXd z_pred = VectorXd(3);
+  z_pred << rho, phi, rho_dot;
+
+  return z_pred;
 
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
+ 
+  // convert radar measurements from cartesian coordinates (x, y, vx, vy) to polar (rho, phi, rho_dot).
+  VectorXd z_pred = RadarCartesianToPolar(x_);
+  VectorXd y = z - z_pred;
 
-  float p_x = x_(0);
-  float p_y = x_(1);
-  float v_x = x_(2);
-  float v_y = x_(3);
-    
-  float rho = sqrt( (p_x * p_x) + (p_y * p_y) );
-  
-  if(rho < 0.00001) {
-    rho = 0.00001;
-  }
-
-  float phi = atan2(p_y, p_x);
-  float rho_d = ( (p_x * v_x) + (p_y * v_y) ) / rho;
-    
-  VectorXd h(3);
-  h << rho, phi, rho_d;
-  VectorXd y = z - h;
-
+  // normalize the angle between -pi to pi
   while(y(1) > M_PI){
     y(1) -= DoublePI;
   }
@@ -68,17 +89,16 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
     y(1) += DoublePI;
   }
 
-  UpdateHelper(y);
-
-}
-
-void KalmanFilter::UpdateHelper(const VectorXd &y) {
+  // following is exact the same as in the function of KalmanFilter::Update()
   MatrixXd Ht = H_.transpose();
-  MatrixXd S = H_ * P_ * Ht + R_;
+  MatrixXd PHt = P_ * Ht;
+  MatrixXd S = H_ * PHt + R_;
   MatrixXd Si = S.inverse();
-  MatrixXd K = P_ * Ht * Si;
+  MatrixXd K = PHt * Si;
+
+  //new estimate
+  x_ = x_ + (K * y);
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
 }
-

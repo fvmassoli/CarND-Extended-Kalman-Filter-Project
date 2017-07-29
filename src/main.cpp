@@ -126,8 +126,6 @@ int main()
 
     	  VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
 
-        cout << "RMSE = " << RMSE << endl;
-
           json msgJson;
           msgJson["estimate_x"] = p_x;
           msgJson["estimate_y"] = p_y;
@@ -137,6 +135,14 @@ int main()
           msgJson["rmse_vy"] = RMSE(3);
           auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
+
+	  cout << "**************************************************" << endl;
+          cout << "**************************************************" << endl;
+          cout << "rmse_x: " << RMSE(0) << endl;
+          cout << "rmse_y: " << RMSE(1) << endl;
+          cout << "rmse_vx: " << RMSE(2) << endl;
+          cout << "rmse_vy: " << RMSE(3) << endl;
+          
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 	  
         }
