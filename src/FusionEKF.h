@@ -35,6 +35,8 @@ private:
   // check whether the tracking toolbox was initialized or not (first measurement)
   bool is_initialized_;
 
+  Eigen::VectorXd ConvertRadarCoordinatesToCartesian(Eigen::VectorXd &coordinates);
+
   // previous timestamp
   long long previous_timestamp_;
 
